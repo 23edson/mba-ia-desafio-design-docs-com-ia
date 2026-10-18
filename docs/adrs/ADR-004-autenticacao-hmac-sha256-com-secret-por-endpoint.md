@@ -1,0 +1,78 @@
+# ADR-004: Autenticação de webhooks via HMAC-SHA256 com secret única por endpoint, tolerância de rotação de 24 horas e obrigatoriedade de HTTPS
+
+| Campo | Valor |
+| --- | --- |
+| Status | Aceito |
+| Data | 2026-10-17 (data de elaboração; a reunião não registrou data) |
+| Decisores | Sofia (fechou a assinatura com HMAC-SHA256 no header `X-Signature`, a exigência de secret única por endpoint com suporte a rotação com tolerância de 24 horas, a obrigatoriedade de URLs HTTPS validada via schema Zod, a inclusão do header `X-Webhook-Id` e a reserva de 2 dias úteis de revisão de segurança pré-deploy), Diego (concordou com o isolamento de secret por endpoint para mitigar vazamentos, propôs o header `X-Timestamp` para detecção opcional de replay attack pelo cliente e aceitou `X-Webhook-Id`), Bruno (questionou o algoritmo e confirmou os campos da tabela de configuração de webhook) e Marcos (definiu o cadastro via POST com URL, eventos e retorno da secret gerada) `[T-16]`, `[T-17]`, `[T-18]`, `[T-26]`, `[T-37]`, `[T-38.1]`, `[T-49]`, `[T-61]` |
+| Origem | `[T-16]` · `[09:20]`, `[09:22]` Sofia; `[T-17]` · `[09:21]`, `[09:22]` Sofia; `[T-18]` · `[09:23]` Sofia; `[T-24]` · `[09:29]` Bruno; `[T-26]` · `[09:31]` Marcos; `[T-37]` · `[09:44]`, `[09:45]` Diego/Sofia; `[T-38.1]` · `[09:46]` Sofia; `[T-49]` · `[09:21]` Sofia; `[T-61]` · `[09:21]` Bruno/Sofia |
+
+## Status
+
+Aceito
+
+## Contexto
+
+Como o sistema despacha eventos contendo dados de pedidos para URLs externas fora da infraestrutura da plataforma, os destinatários precisam de um mecanismo confiável para verificar a autenticidade da origem e atestar que o conteúdo da notificação não sofreu adulteração durante o tráfego `[T-16]`. Ao mesmo tempo, o tráfego das requisições precisa ser protegido contra interceptação e espionagem na rede externa, o que exige conexões seguras sob TLS `[T-18]`. Caso uma credencial seja exposta indevidamente por um consumidor, o impacto de segurança deve ser circunscrito àquele endpoint, sem comprometer outros clientes ou outros destinos do mesmo cliente `[T-17]`. Além disso, os clientes precisam dispor de meios para substituir suas credenciais de forma programática sem sofrer indisponibilidade temporária de recebimento durante a transição dos seus sistemas `[T-17]`, `[T-49]`. No código atual, a validação de entrada de dados da API já é centralizada por meio da biblioteca Zod integrada ao middleware `validate` (`[código: `src/middlewares/validate.middleware.ts:11-37`]`, demonstrado em `[código: `src/modules/orders/order.schemas.ts:1-34`]`), porém a configuração de mascaramento do logger estruturado Pino em `src/shared/logger/index.ts` (`redactPaths`, linhas 4–11) cobre apenas autorização, cookies e senhas/tokens, sem mascarar chaves de webhook (`secret`) nem assinaturas de webhook (`X-Signature`) `[T-24]`, `[código: `src/shared/logger/index.ts:4-11`]`, `[código: `src/shared/logger/index.ts:16-19`]`.
+
+## Decisão
+
+Decidimos assinar o corpo de cada requisição HTTP de notificação utilizando o algoritmo HMAC-SHA256 transmitido no cabeçalho `X-Signature`, gerar e manter uma chave secreta (`secret`) única para cada endpoint de webhook cadastrado, suportar a rotação programática de chaves com período de tolerância de 24 horas em que a chave anterior permanece válida para validação pelo cliente, exigir obrigatoriamente protocolo HTTPS para qualquer URL de webhook cadastrada mediante validação no schema Zod, transmitir os cabeçalhos de metadados `X-Timestamp` (para viabilizar a detecção de replay attack pelo cliente caso este a implemente) e `X-Webhook-Id` (para identificar o endpoint cadastrado), e reservar uma janela de pelo menos dois dias úteis para revisão de código de segurança por Sofia antes do deploy em produção `[T-16]`, `[T-17]`, `[T-18]`, `[T-37]`, `[T-38.1]`, `[T-49]`, `[T-61]`.
+
+**Regras e especificações fechadas:**
+
+- **Assinatura HMAC-SHA256 no cabeçalho `X-Signature`:** A integridade e autenticidade do payload são asseguradas gerando-se um hash HMAC com a função criptográfica SHA-256 calculado sobre o corpo da requisição HTTP, sendo o resultado transmitido no cabeçalho customizado `X-Signature`, permitindo ao cliente recalcular a assinatura com a sua secret e comparar o resultado `[T-16]`.
+- **Secret exclusiva por endpoint de webhook:** Cada cadastro de webhook possui uma chave secreta própria e independente gerada pela plataforma no momento da criação via endpoint `POST` (`[T-26]`), rejeitando expressamente qualquer modelo de chave secreta global compartilhada entre todos os endpoints ou clientes `[T-17]`, `[T-61]`. A tabela de configuração proposta armazenará `url`, `secret`, `customer_id` e estado ativo `[T-61]`.
+- **Rotação de secret com período de tolerância de 24 horas:** A plataforma disponibilizará endpoint na API para solicitação de rotação de secret pelo cliente (`[T-49]`); ao acionar a rotação, uma nova secret é gerada e a secret anterior continua sendo aceita e válida durante uma janela de convivência de 24 horas para que os sistemas do cliente realizem a transição sem perda de eventos, expirando a chave antiga após esse prazo `[T-17]`.
+- **Validação mandatória de HTTPS com schema Zod:** O cadastro e a atualização de URLs de webhook exigem obrigatoriamente o protocolo HTTPS; tentativas de cadastrar URLs sob protocolo inseguro HTTP serão rejeitadas com erro de validação utilizando o padrão de schemas Zod do projeto (`[código: `src/modules/orders/order.schemas.ts:1-34`]`, `[código: `src/middlewares/validate.middleware.ts:11-37`]`) `[T-18]`.
+- **Cabeçalhos HTTP (`X-Signature`, `X-Timestamp`, `X-Webhook-Id`, `X-Event-Id` e `Content-Type`):** Toda requisição outbound incluirá `Content-Type: application/json`, a assinatura `X-Signature` calculada sobre o corpo da mensagem, o identificador único do evento `X-Event-Id` (UUID gerado na outbox), o cabeçalho `X-Timestamp` contendo o timestamp do envio (para permitir ao cliente detectar replay attack se quiser) e o cabeçalho `X-Webhook-Id` informando o identificador do endpoint de webhook cadastrado na plataforma (permitindo ao cliente identificar qual cadastro gerou o envio quando possuir múltiplos endpoints) `[T-37]`. Preserva-se estritamente a distinção funcional entre o identificador do evento de negócio (`X-Event-Id`) e o identificador do cadastro do endpoint (`X-Webhook-Id`), sem atribuir a nenhum cabeçalho semântica não respaldada pelas fontes `[T-37]`.
+- **Revisão de segurança pré-deploy de 2 dias úteis:** Fica estabelecida a reserva mandatória de 2 dias úteis de revisão do código de segurança por Sofia antes da liberação para produção, com foco específico nas rotinas de geração criptográfica de chaves e cálculo de HMAC `[T-38.1]`.
+
+## Alternativas consideradas
+
+### Alternativa 1: Chave secreta global compartilhada pela plataforma (`[T-61]`)
+
+- **Prós:** Análise técnica: simplificaria o armazenamento no banco de dados e a geração de credenciais, reduzindo a complexidade de gerenciar segredos individuais por endpoint.
+- **Contras:** Caso a chave única vazasse em decorrência de incidente em um cliente ou log de aplicação exposto, todo o tráfego de webhooks da plataforma ficaria vulnerável, comprometendo a autenticidade dos dados de todos os outros clientes e endpoints `[T-17]`, `[T-61]`.
+- **Motivo do descarte:** Descartada por Sofia em `[09:21]` devido ao risco crítico de segurança ("senão se vaza uma, vaza tudo"), decidindo-se estritamente pela chave secreta isolada por endpoint com ciclo de vida e rotação individuais `[T-17]`.
+
+### Alternativa 2: Autenticação mTLS ou Assinatura com Tokens JWT (plausível, não discutida)
+
+- **Prós:** Análise técnica: mTLS (Mutual TLS) dispensaria a transmissão de cabeçalhos de assinatura adicionais a nível de aplicação ao validar certificados X.509 em camada de transporte; já tokens JWT assinados poderiam transportar expiração embutida e reivindicações estruturadas.
+- **Contras:** Análise técnica: mTLS exigiria infraestrutura complexa de autoridade certificadora (CA) e provisionamento de certificados para clientes externos, enquanto JWT com assinatura assimétrica adicionaria sobrecarga desnecessária de processamento e complexidade de integração para clientes simples que só precisam validar uma assinatura com chave compartilhada.
+- **Motivo do descarte:** Análise técnica: Essas opções não foram propostas nem avaliadas pelos participantes na reunião, constando aqui estritamente como comparação técnica de arquiteturas plausíveis de mercado; os participantes fecharam diretamente a adoção de HMAC-SHA256 como padrão de mercado amplamente suportado por bibliotecas no lado do cliente `[T-16]`.
+
+## Consequências
+
+**Positivas**
+
+- O uso de HMAC-SHA256 viabiliza ao destinatário confirmar a identidade do remetente e detectar qualquer alteração no corpo do evento recebido utilizando bibliotecas criptográficas padrão presentes no ecossistema de qualquer cliente `[T-16]`.
+- O isolamento da secret por endpoint mitiga riscos sistêmicos: o vazamento de uma secret em logs de um cliente não compromete os demais endpoints cadastrados nem expõe notificações de outras organizações `[T-17]`.
+- O período de tolerância de 24 horas na rotação de chaves permite atualizar credenciais em produção sem interrupção de serviço, concedendo prazo hábil para a substituição de secrets no ambiente do cliente `[T-17]`.
+- A obrigatoriedade de HTTPS assegura criptografia na camada de transporte contra interceptação de payloads em trânsito e aproveita o ecossistema de validação Zod já estabelecido no projeto (`[código: `src/modules/orders/order.schemas.ts:1-34`]`, `[código: `src/middlewares/validate.middleware.ts:11-37`]`) `[T-18]`.
+- A inclusão de `X-Timestamp` fornece uma referência temporal do envio para inspeção pelo consumidor, embora, como análise técnica, a presença isolada do cabeçalho não garanta proteção contra ataques de repetição caso o timestamp não seja vinculado à assinatura HMAC nem validado ativamente pelo receptor `[T-37]`.
+- O envio conjunto dos cabeçalhos `X-Event-Id` e `X-Webhook-Id` preserva com clareza a distinção entre o identificador do evento de pedido e o identificador do cadastro do endpoint, permitindo ao cliente com múltiplos endpoints identificar qual configuração gerou a notificação `[T-37]`.
+- A reserva de 2 dias úteis para auditoria do código por Sofia assegura validação das rotinas de geração de secrets e assinatura criptográfica antes da ida para produção `[T-38.1]`.
+
+**Negativas**
+
+- Exige que o modelo de dados de configuração armazene e gerencie o ciclo de vida de múltiplas chaves (secret atual e secret anterior durante a janela de transição de 24 horas), bem como disponibilizar e documentar um endpoint de rotação de credenciais (`[T-17]`, `[T-49]`, `[T-61]`).
+- Clientes locais de homologação ou desenvolvimento sem certificado TLS válido não poderão cadastrar URLs `http://` para teste direto, demandando o uso de túneis ou certificados HTTPS locais válidos `[T-18]`.
+- Análise técnica: O cálculo de HMAC-SHA256 para cada disparo consome ciclos de CPU do worker no momento do envio, e a configuração atual de mascaramento do Pino em `src/shared/logger/index.ts` (`redactPaths`, linhas 4–11) precisará ser estendida para impedir o vazamento acidental de `secret` e `X-Signature` nos logs de aplicação `[T-24]`, `[código: `src/shared/logger/index.ts:4-11`]`, `[código: `src/shared/logger/index.ts:16-19`]`.
+
+**Trade-off aceito:** aceita-se a complexidade operacional de manter chaves secretas únicas por endpoint, gerenciar a sobreposição de chaves por 24 horas e restringir o tráfego estritamente a URLs HTTPS em troca de garantir a integridade do payload e a autenticidade da origem, conter o raio de impacto de eventuais vazamentos de credenciais e proteger os dados dos clientes contra interceptação na rede `[T-16]`, `[T-17]`, `[T-18]`, `[T-61]`.
+
+## Questões em aberto
+
+- **Mecanismo de proteção da secret em repouso (Lacuna 6, sem origem na reunião):** A transcrição definiu os campos da tabela de configuração (`url`, `secret`, `customer_id`, estado ativo) e o uso do HMAC, mas não discutiu como a secret deve ser protegida ou criptografada no banco de dados MySQL em repouso `[T-17]`, `[T-61]`.
+- **Geração e validação de assinaturas durante a janela de tolerância de 24 horas na rotação (sem origem na reunião):** A reunião fechou a decisão de que a secret anterior permanece válida por 24 horas em paralelo após a solicitação de rotação para permitir a migração sem interrupção de recebimento (`[T-17]`), mas não definiu como as assinaturas são geradas e validadas durante o período de transição: se os envios passam a ser assinados imediatamente com a nova secret (cabendo ao receptor testar a chave nova ou antiga), se são transmitidas assinaturas com ambas as chaves, ou como o consumidor deve proceder na verificação `[T-17]`. Como a transcrição não definiu o mecanismo, a especificação exata fica como pendência para o FDD.
+- **Formato de codificação do cabeçalho `X-Signature` (Lacuna 11, sem origem na reunião):** A reunião definiu o algoritmo HMAC-SHA256 e o nome do header `X-Signature`, mas não especificou se o valor resultante da assinatura deve ser codificado em representação hexadecimal (`hex`) ou em base64 (`base64`) `[T-16]`.
+- **Caminho e contrato do endpoint de rotação de secret (Lacuna 4, sem origem na reunião):** Foi acordado que existirá um endpoint na API para o cliente solicitar a rotação da secret (`[T-49]`), porém o caminho exato da rota e seu formato de payload ou resposta não foram definidos na transcrição `[T-49]`.
+- **Vínculo do `X-Timestamp` ao HMAC e validação contra replay attack pelo consumidor (questão técnica em aberto):** Diego definiu em `[09:44]` que o cabeçalho `X-Timestamp` deve ser enviado contendo o timestamp do envio para que o cliente consiga detectar replay attack se quiser `[T-37]`. Contudo, como análise técnica, a presença isolada desse cabeçalho não garante proteção contra replay: para que haja proteção efetiva, o valor de `X-Timestamp` precisaria estar vinculado à assinatura HMAC (evitando adulteração do timestamp em trânsito) e o consumidor precisa implementar a checagem temporal com política de tolerância a desvio de relógio (clock drift), detalhes que não foram definidos na reunião `[T-16]`, `[T-37]`.
+- **Adequação do `redact` no logger Pino (Achado 7 do código, sem origem na reunião):** O código existente em `src/shared/logger/index.ts` (linhas 4–11) mascara apenas credenciais conhecidas (`req.headers.authorization`, `req.headers.cookie`, `*.password`, `*.passwordHash`, `*.token`, `*.accessToken`) e não contempla campos com o nome `secret` nem cabeçalhos como `X-Signature`, cabendo ao FDD e à implementação do módulo de webhooks adequar os filtros para evitar vazamento em logs `[T-24]`, `[código: `src/shared/logger/index.ts:4-11`]`, `[código: `src/shared/logger/index.ts:16-19`]`.
+
+## Referências
+
+- Transcrição: `[09:20]` Sofia e Bruno (`[T-16]`); `[09:21]` Sofia e Bruno (`[T-17]`, `[T-49]`, `[T-61]`); `[09:22]` Sofia e Diego (`[T-16]`, `[T-17]`); `[09:23]` Sofia (`[T-18]`); `[09:29]` Bruno (`[T-24]`); `[09:31]` Marcos (`[T-26]`); `[09:44]` Diego e Bruno (`[T-37]`); `[09:44]` Sofia (`[T-37]`); `[09:45]` Diego (`[T-37]`); `[09:46]` Sofia (`[T-38.1]`)
+- Código: `src/modules/orders/order.schemas.ts:1-34`, `src/middlewares/validate.middleware.ts:11-37`, `src/shared/logger/index.ts:4-11`, `src/shared/logger/index.ts:16-19`
+- Documentos relacionados: [Plano de ADRs](./PLANO-ADRS.md) · [README de ADRs](./README.md) · [ADR-001](./ADR-001-outbox-transacional-no-mysql.md) · [ADR-002](./ADR-002-worker-separado-com-polling.md) · [ADR-003](./ADR-003-retry-com-backoff-e-dlq.md) · [RFC](../RFC.md) · [FDD](../FDD.md)

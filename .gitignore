@@ -9,3 +9,8 @@ coverage/
 .idea/
 .vscode/
 *.tsbuildinfo
+# _work: versionar apenas artefatos definitivos
+_work/skills/
+_work/*.sha256
+_work/*congelado*
+_work/*.py
