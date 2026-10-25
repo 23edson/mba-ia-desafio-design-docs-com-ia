@@ -14,7 +14,7 @@ REGRAS DE USO (apague este bloco no documento final)
 - Não repita a justificativa das decisões: linke o ADR. Não repita o raciocínio do RFC.
 - Toda afirmação termina com [T-xx] (transcrição) ou [código: caminho].
 - Item de design que a reunião NÃO definiu: marque "(proposta de design, sem origem na reunião)".
-- Ponto que a reunião deixou aberto: vai para "Questões pendentes", nunca é decidido em silêncio.
+- Ponto que a reunião deixou aberto: se for uma lacuna técnica explicitamente encaminhada ao FDD, especifique uma solução como proposta de design quando houver base suficiente. Se depender de decisão de negócio, aprovação de segurança ou mudança arquitetural, registre em "Questões pendentes"; não decida isso em silêncio.
 - Itens descartados ou adiados aparecem só em "Escopo e exclusões".
 - Todo caminho de arquivo citado deve ser verificado com `ls` antes de entrar aqui.
 - Números (timeouts, tentativas, intervalos, limites) sempre com origem.
@@ -254,10 +254,10 @@ X-Signature: <assinatura>
 
 ## 16. Questões pendentes antes da implementação
 
-1. [ponto que a reunião não fechou, com link para a questão em aberto do RFC] [T-xx]
-2. [ponto]
+1. [Questão que depende de decisão de negócio, aprovação de segurança ou mudança arquitetural, com link para a questão em aberto da RFC e origem T-xx]
+2. [Lacuna técnica que não pôde ser especificada com as fontes disponíveis, com justificativa, impacto e origem]
 
-> Não resolva aqui pontos que a reunião deixou em aberto. Registre e sinalize.
+> Não reabra aqui decisões já aprovadas na RFC/ADRs. Lacunas técnicas explicitamente encaminhadas ao FDD devem ser resolvidas no próprio FDD como proposta de design quando houver base suficiente. Mantenha como pendente apenas o que realmente depende de decisão externa ou não pode ser concluído com as evidências disponíveis.
 
 ## 17. ADRs relacionados
 

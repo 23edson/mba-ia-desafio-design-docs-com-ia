@@ -13,4 +13,5 @@ coverage/
 _work/skills/
 _work/*.sha256
 _work/*congelado*
+_work/*.v1.md
 _work/*.py

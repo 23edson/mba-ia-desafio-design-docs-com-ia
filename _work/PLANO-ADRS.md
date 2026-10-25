@@ -22,7 +22,7 @@ Este documento registra o planejamento e o recorte de escopo dos **7 Architectur
 | **4. Autenticação HMAC-SHA256 com secret por endpoint** | `T-16`, `T-17` | `T-61` (secret global da plataforma, descartada por risco de segurança) | Lacuna 4 (rota de rotação), Lacuna 6 (proteção da secret em repouso), Lacuna 11 (encoding hex/base64 de `X-Signature`) | `ADR-004-autenticacao-hmac-sha256-com-secret-por-endpoint.md` |
 | **5. Garantia de entrega *at-least-once* com `X-Event-Id`** | `T-20` | `T-44` (entrega *exactly-once*) | `T-64` (manutenção ou renovação do `event_id` no replay da DLQ) | `ADR-005-entrega-at-least-once-com-event-id.md` |
 | **6. Reuso dos padrões existentes do projeto** | `T-48`, `T-27` | `T-60` (acoplar repository no `OrderService`), introdução de bibliotecas externas fora do padrão | `T-22` (nome do processador), `T-27` e `T-50` (escopo de autorização por cliente / Achado 4) | `ADR-006-reuso-dos-padroes-do-projeto.md` |
-| **7. Payload como snapshot imutável e limite de 64 KB** | `T-40` | `T-45` (truncar payload grande), gravar apenas `order_id` para consulta posterior | `T-36` (quais são os "campos básicos da order" além de `total_cents`), Lacuna 11, Achado 1 (`OrderService.create`) | `ADR-007-payload-snapshot-e-limite-de-64kb.md` |
+| **7. Payload como snapshot gravado na inserção e limite de 64 KB** | `T-40` | `T-45` (truncar payload grande), gravar apenas `order_id` para consulta posterior | `T-36` (quais são os "campos básicos da order" além de `total_cents`), Lacuna 11, Achado 1 (`OrderService.create`) | `ADR-007-payload-snapshot-e-limite-de-64kb.md` |
 
 Ordem de geração prevista: `ADR-001` a `ADR-007` (um documento por vez, validado contra `_work/CATALOGO.md`, `_work/MAPA-CODIGO.md` e `docs/TRACKER.md`).
 
@@ -122,11 +122,11 @@ Ordem de geração prevista: `ADR-001` a `ADR-007` (um documento por vez, valida
   - Decisão e restrições: T-20, T-37, T-11
   - Alternativa descartada: T-44 (exactly-once)
   - Dependência: T-54 (documentar o at-least-once e a deduplicação no portal de desenvolvedor)
-  - Questão em aberto: T-64
+  - Questão em aberto: T-64, T-39
 - **Âncoras de código (mapa):** nenhuma específica. Se citar código, só a Parte C (nada de webhook existe hoje).
 - **Não pode decidir:**
   - Se o replay mantém ou renova o `event_id` `[T-64]`
-  - Se o `event_id` é a própria chave primária da outbox ou um campo à parte (não está na transcrição) `[T-20]`
+  - Se o `event_id` é a própria chave primária da outbox ou um campo à parte (não está na transcrição) `[T-20]`, `[T-39]`
   - Estratégia de deduplicação do lado do cliente além de deduplicar pelo `event_id` `[T-20]`
 - **Alternativas esperadas:** entrega *exactly-once* (descartada na reunião por exigir coordenação dos dois lados) `[T-44]`.
 
@@ -153,12 +153,12 @@ Ordem de geração prevista: `ADR-001` a `ADR-007` (um documento por vez, valida
   - Códigos de erro além dos três exemplos da reunião (`WEBHOOK_NOT_FOUND`, `WEBHOOK_INVALID_URL`, `WEBHOOK_SECRET_REQUIRED`) `[T-23]`
   - Quem pode gerenciar webhooks de qual cliente: `T-27` e `T-50` deixam o CRUD aberto a qualquer papel autenticado, e o código não tem papel de cliente (achado 4). Registrar como pendência de segurança, sem propor solução `[T-27]`, `[T-50]`, [código: `src/middlewares/auth.middleware.ts`]
   - Ajustes de `redact` e do nome do logger (achados 6 e 7): observação, solução é do FDD [código: `src/shared/logger/index.ts`]
-- **Alternativas esperadas:** biblioteca ou framework novo para erros, logs ou filas `[T-48]`; módulo fora do padrão de `src/modules` `[T-21]`; injetar o repository de webhook no `OrderService` (já descartada no `ADR-001`, referenciada aqui) `[T-48]`.
+- **Alternativas esperadas:** biblioteca ou framework novo para erros, logs ou filas `[T-48]`; módulo fora do padrão de `src/modules` `[T-21]`; injetar o repository de webhook no `OrderService` (já descartada no `ADR-001`, referenciada aqui) `[T-60]`.
 
 ## ADR-007
 
 - **Arquivo:** `ADR-007-payload-snapshot-e-limite-de-64kb.md`
-- **Decisão:** gravar o payload do evento já renderizado como snapshot imutável, sem itens do pedido, e rejeitar (sem truncar) eventos acima de 64 KB `[T-19]`, `[T-36]`, `[T-40]`, `[T-45]`.
+- **Decisão:** gravar o payload do evento já renderizado como snapshot gravado na inserção, sem itens do pedido, e rejeitar (sem truncar) eventos acima de 64 KB `[T-19]`, `[T-36]`, `[T-40]`, `[T-45]`.
 - **IDs permitidos:**
   - Decisão e restrições: T-19, T-36, T-40
   - Alternativa descartada: T-45 (truncar payload grande)
@@ -174,5 +174,5 @@ Ordem de geração prevista: `ADR-001` a `ADR-007` (um documento por vez, valida
   - Como serializar os bytes ou assinar (lacuna 11, não está na transcrição) `[T-19]`
   - O que acontece com a mudança de status quando o evento excede 64 KB (a reunião só diz "erro") `[T-19]`, `[T-45]`
 - **Alternativas esperadas:**
-  - Gravar só o `order_id` e renderizar o payload no envio (discutida e descartada em favor do snapshot imutável) `[T-40]`.
+  - Gravar só o `order_id` e renderizar o payload no envio (discutida e descartada em favor do snapshot gravado na inserção) `[T-40]`.
   - Truncar o payload grande `[T-45]`.

@@ -353,3 +353,137 @@ Arquivo de registro histórico das tarefas de documentação executadas.
 - **Arquivos gerados/alterados:** `_work/LOG.md`, `processo/LOG.md`.
 - **Pendências ou dúvidas:** Nenhuma nos ADRs; os 4 avisos foram integralmente auditados e justificados (3 referentes a rótulos de análise técnica em alternativas e 1 referente à menção da ambiguidade T-36 na Decisão do ADR-007 para justificar a omissão de itens). Sincronizado `processo/LOG.md`.
 - **Correção do usuário:**
+
+### [2026-10-24 16:03] Auditoria de Integridade e Verificação de Pastas/Arquivos Inexistentes
+- **Prompt (resumo):** Revisar todos os arquivos e verificar integridade global, checando se não há citações a pastas ou arquivos inexistentes no repositório (ex.: antiga pasta `processo/`).
+- **Fontes usadas:** `docs/adrs/ADR-001-*.md` a `ADR-007-*.md`, `docs/adrs/README.md`, `docs/TRACKER.md`, `_work/CATALOGO.md`, `_work/MAPA-CODIGO.md`, `_work/PLANO-ADRS.md`, `_work/INDICE.md`, `_work/RESUMO-ADRS.md`, `_work/CATALOGO.sha256`, `_work/MAPA-CODIGO.sha256`.
+- **Arquivos gerados/alterados:** `docs/adrs/README.md`, `_work/LOG.md`.
+- **Pendências ou dúvidas:** Nenhuma. Corrigido link relativo em `docs/adrs/README.md` (de `./PLANO-ADRS.md` para `../../_work/PLANO-ADRS.md`). Confirmado que não há menções a `processo/` fora do registro histórico do log e da regra do projeto em `GEMINI.md`.
+- **Correção do usuário:**
+
+### [2026-10-24 16:10] Revisão Semântica da Solidez dos 7 ADRs
+- **Prompt (resumo):** Avaliar a solidez do conteúdo descrito nos 7 ADRs em relação ao contexto do projeto, catálogo de fatos e transcrição original.
+- **Fontes usadas:** `docs/adrs/ADR-001-*.md` a `ADR-007-*.md`, `_work/CATALOGO.md`, `_work/MAPA-CODIGO.md`, `TRANSCRICAO.md`, `_work/PLANO-ADRS.md`, `_work/RESUMO-ADRS.md`.
+- **Arquivos gerados/alterados:** `_work/LOG.md`.
+- **Pendências ou dúvidas:** Nenhuma. Confirmada a conformidade semântica dos 7 ADRs: decisões 100% ancoradas em IDs fechados, ausência de termos absolutos indevidos, distinção rigorosa entre proposta e código existente, e delegação correta das ambiguidades para o FDD.
+- **Correção do usuário:**
+
+### [2026-10-24 16:21] Congelamento dos 7 ADRs (v1) e Geração de Checksums
+- **Prompt (resumo):** Congelar os 7 ADRs para não modificação e criar arquivos .md v1 para cada um deles.
+- **Fontes usadas:** `docs/adrs/ADR-001-*.md` a `ADR-007-*.md`, `.agents/skills/adr-generator/scripts/verificar_adr.py`.
+- **Arquivos gerados/alterados:** `_work/ADR-001-*.v1-congelado.md` a `_work/ADR-007-*.v1-congelado.md`, `_work/ADR-001-*.v1.md` a `_work/ADR-007-*.v1.md`, `_work/ADRS.sha256`, `.gitignore`, `docs/adrs/ADR-*.md` (permissões 444), `_work/LOG.md`.
+- **Pendências ou dúvidas:** Nenhuma. Permissões de somente leitura (`chmod 444`) aplicadas aos 7 ADRs em `docs/adrs/` e às versões congeladas em `_work/`. Hashes SHA-256 calculados e validados em `_work/ADRS.sha256`. Validador `verificar_adr.py --all` executado com 0 erros.
+- **Correção do usuário:**
+
+### [2026-10-24 16:33] RFC — Etapa 1: Levantamento e Proposta de Estrutura
+- **Prompt (resumo):** Iniciar a elaboração da RFC usando a skill rfc-generator.
+- **Fontes usadas:** `_work/templates/rfc_template.md`, `_work/CATALOGO.md` (`[T-01]` a `[T-65]`), `_work/MAPA-CODIGO.md`, `_work/PLANO-ADRS.md`, `_work/INDICE.md`, `docs/adrs/ADR-001-outbox-transacional-no-mysql.md` a `ADR-007-payload-snapshot-e-limite-de-64kb.md`, `docs/adrs/README.md`, `mba-ia-desafio-design-docs-com-ia/src/modules/orders/order.service.ts`, `mba-ia-desafio-design-docs-com-ia/src/server.ts`, `mba-ia-desafio-design-docs-com-ia/src/config/database.ts`, `mba-ia-desafio-design-docs-com-ia/src/middlewares/auth.middleware.ts`, `mba-ia-desafio-design-docs-com-ia/src/middlewares/error.middleware.ts`, `mba-ia-desafio-design-docs-com-ia/src/shared/logger/index.ts`, `mba-ia-desafio-design-docs-com-ia/src/shared/errors/app-error.ts`, `mba-ia-desafio-design-docs-com-ia/prisma/schema.prisma`.
+- **Arquivos gerados/alterados:** `_work/LOG.md`.
+- **Pendências ou dúvidas:** Nenhuma para o planejamento. Levantadas 10 questões em aberto / ambiguidades (`[T-12.1]`, `[T-22]`, `[T-27.1]`, `[T-36]`, `[T-47]`, `[T-49]`, `[T-63]`, `[T-64]`, tamanho de lote `[T-07]` e chamada na criação do pedido `[T-34]`) que serão catalogadas na seção própria da RFC e endereçadas no FDD. Aguardando aprovação explícita do usuário para avançar à Etapa 2 (geração da RFC).
+- **Correção do usuário:**
+
+### [2026-10-24 16:38] RFC — Etapa 1: Revisão do Planejamento conforme Feedback do Usuário
+- **Prompt (resumo):** Ajustar planejamento da RFC: delimitar X-Timestamp/replay attack, delimitar ordenação por pedido frente a retries, diferenciar meta de latência de garantia dura, incluir risco de isolamento multi-tenant e eliminar termos absolutos/revisar classificações de mitigação.
+- **Fontes usadas:** `_work/templates/rfc_template.md`, `_work/CATALOGO.md` (`[T-01]`, `[T-02]`, `[T-07]`, `[T-08]`, `[T-11]`, `[T-12]`, `[T-13]`, `[T-27]`, `[T-27.1]`, `[T-35]`, `[T-37]`, `[T-47]`, `[T-50]`, `[T-62]`), `_work/MAPA-CODIGO.md`, `_work/PLANO-ADRS.md`, `docs/adrs/ADR-001-outbox-transacional-no-mysql.md` a `ADR-007-payload-snapshot-e-limite-de-64kb.md`.
+- **Arquivos gerados/alterados:** `_work/LOG.md`.
+- **Pendências ou dúvidas:** Nenhuma para o planejamento revisado. Incorporados os 5 ajustes solicitados sem introduzir novas decisões arquiteturais e mantendo as 7 ADRs congeladas e as questões abertas catalogadas. Aguardando aprovação explícita do usuário para avançar à Etapa 2.
+- **Correção do usuário:**
+
+### [2026-10-24 16:41] RFC — Etapa 1: Refinamento de Semântica de Retry e Questão Aberta de Ordenação
+- **Prompt (resumo):** Ajustar planejamento da RFC: revisar descrição de 5 tentativas preservando a pendência de semântica (total vs retries) e adicionar questão aberta explícita sobre o contrato de ordenação por pedido durante retentativas.
+- **Fontes usadas:** `_work/templates/rfc_template.md`, `_work/CATALOGO.md` (`[T-07]`, `[T-11]`, `[T-12]`, `[T-12.1]`, `[T-13]`, `[T-14]`, `[T-20]`, `[T-54]`), `_work/MAPA-CODIGO.md`, `_work/PLANO-ADRS.md`, `docs/adrs/ADR-002-worker-separado-com-polling.md`, `docs/adrs/ADR-003-retry-com-backoff-e-dlq.md`, `docs/adrs/ADR-005-entrega-at-least-once-com-event-id.md`.
+- **Arquivos gerados/alterados:** `_work/LOG.md`.
+- **Pendências ou dúvidas:** Nenhuma para o planejamento revisado. Preservadas as 7 ADRs congeladas sem introduzir novas decisões arquiteturais; não houve alteração em `RFC.md`. Aguardando aprovação explícita do usuário para avançar à Etapa 2.
+- **Correção do usuário:**
+
+### [2026-10-24 16:46] RFC — Etapa 2: Geração e Auditoria da RFC
+- **Prompt (resumo):** Gerar o documento RFC em docs/RFC.md conforme o planejamento aprovado, preservando as 7 ADRs congeladas, delimitando meta de latência e bloqueio por single-worker, e auditando referências e links.
+- **Fontes usadas:** `_work/templates/rfc_template.md`, `_work/CATALOGO.md` (`[T-01]` a `[T-65]`), `_work/MAPA-CODIGO.md`, `_work/PLANO-ADRS.md`, `_work/INDICE.md`, `docs/adrs/ADR-001-outbox-transacional-no-mysql.md` a `ADR-007-payload-snapshot-e-limite-de-64kb.md`, `mba-ia-desafio-design-docs-com-ia/src/modules/orders/order.service.ts`, `mba-ia-desafio-design-docs-com-ia/src/modules/orders/order.controller.ts`, `mba-ia-desafio-design-docs-com-ia/src/server.ts`, `mba-ia-desafio-design-docs-com-ia/src/config/database.ts`, `mba-ia-desafio-design-docs-com-ia/src/middlewares/auth.middleware.ts`, `mba-ia-desafio-design-docs-com-ia/src/middlewares/error.middleware.ts`, `mba-ia-desafio-design-docs-com-ia/src/shared/logger/index.ts`, `mba-ia-desafio-design-docs-com-ia/src/shared/errors/app-error.ts`, `mba-ia-desafio-design-docs-com-ia/prisma/schema.prisma`.
+- **Arquivos gerados/alterados:** `docs/RFC.md`, `_work/LOG.md`.
+- **Pendências ou dúvidas:** Nenhuma contradição material encontrada. Todas as 11 questões em aberto (`[T-11]`/`[T-13]` ordenação sob retentativas, `[T-12.1]` semântica de 5 tentativas, `[T-63]` outbox pós-DLQ, `[T-64]` event_id no replay, `[T-07]` batch size, `[T-34]` criação de pedido em `create`, `[T-34]` posição em `changeStatus`, `[T-22]` nome do worker, `[T-27.1]` customer_id no body/path, `[T-36]` campos básicos, `[T-49]` rota de nova secret) foram mantidas registradas na tabela própria da RFC para resolução no FDD ou revisão da RFC. Integridade dos 7 ADRs verificada com checksums SHA-256 (100% OK).
+- **Correção do usuário:**
+
+### [2026-10-24 17:00] RFC — Revisão Corretiva e Auditoria de docs/RFC.md
+- **Prompt (resumo):** Realizar revisão corretiva de `docs/RFC.md`: corrigir formatação Markdown, incluir SSRF na análise de riscos, revisar Redis Streams (dual-write vs 2PC), eliminar contradição da DLQ, revisar classificação de riscos, adicionar questões abertas (unidade 64 KB, transação > 64 KB, bytes HMAC/timestamp) e ajustar terminologia.
+- **Fontes usadas:** `_work/templates/rfc_template.md`, `_work/CATALOGO.md` (`[T-01]` a `[T-65]`), `_work/MAPA-CODIGO.md`, `_work/PLANO-ADRS.md`, `_work/INDICE.md`, `docs/adrs/ADR-001-outbox-transacional-no-mysql.md` a `ADR-007-payload-snapshot-e-limite-de-64kb.md`, `mba-ia-desafio-design-docs-com-ia/src/modules/orders/order.service.ts`, `mba-ia-desafio-design-docs-com-ia/src/modules/orders/order.controller.ts`, `mba-ia-desafio-design-docs-com-ia/src/modules/orders/order.routes.ts`, `mba-ia-desafio-design-docs-com-ia/src/modules/orders/order.schemas.ts`, `mba-ia-desafio-design-docs-com-ia/src/server.ts`, `mba-ia-desafio-design-docs-com-ia/src/config/database.ts`, `mba-ia-desafio-design-docs-com-ia/src/middlewares/auth.middleware.ts`, `mba-ia-desafio-design-docs-com-ia/src/middlewares/validate.middleware.ts`, `mba-ia-desafio-design-docs-com-ia/src/middlewares/error.middleware.ts`, `mba-ia-desafio-design-docs-com-ia/src/shared/logger/index.ts`, `mba-ia-desafio-design-docs-com-ia/src/shared/errors/app-error.ts`, `mba-ia-desafio-design-docs-com-ia/src/shared/errors/http-errors.ts`, `mba-ia-desafio-design-docs-com-ia/prisma/schema.prisma`.
+- **Arquivos gerados/alterados:** `docs/RFC.md`, `_work/LOG.md`.
+- **Pendências ou dúvidas:** Nenhuma na revisão corretiva. Todas as 12 questões em aberto (incluindo unidade de 64 KB, comportamento transacional > 64 KB, bytes assinados pelo HMAC/timestamp/codificação e controles anti-SSRF) foram registradas na seção "Questões em aberto" de `docs/RFC.md`. Status da RFC mantido como `Em revisão`. Checksums SHA-256 dos 7 ADRs congelados, catálogo e mapa de código validados com 0 erros.
+- **Correção do usuário:**
+
+### [2026-10-24 17:47] RFC — Revisão Estrutural e Técnica dos Contratos Arquiteturais (`docs/RFC.md`)
+- **Prompt (resumo):** Realizar revisão estrutural e técnica de `docs/RFC.md` para aumentar a precisão dos contratos arquiteturais, separar decisões pendentes de detalhamento do FDD e corrigir lacunas técnicas nos 9 pontos solicitados sem reabrir as 7 ADRs aprovadas.
+- **Fontes usadas:** `docs/RFC.md`, `_work/CATALOGO.md` (`[T-01]` a `[T-65]` e Lacunas 1 a 11), `_work/MAPA-CODIGO.md` (Partes A, B, C, Divergências e Achados 1 a 11), `docs/adrs/ADR-001-outbox-transacional-no-mysql.md` a `ADR-007-payload-snapshot-e-limite-de-64kb.md`, `_work/templates/rfc_template.md`, `src/app.ts:43,67`, `src/routes/index.ts:13-31`, `src/modules/orders/order.service.ts:26,50-124,126-179,204-231`, `src/modules/orders/order.status.ts:1-37`, `src/modules/orders/order.controller.ts:31-64`, `src/modules/orders/order.routes.ts:10-20`, `src/modules/orders/order.schemas.ts:1-34`, `src/modules/users/user.routes.ts:12-18`, `src/server.ts:6-27`, `src/config/database.ts:4-10`, `src/config/env.ts:7-27`, `src/middlewares/auth.middleware.ts:6-10,27-61`, `src/middlewares/validate.middleware.ts:11-37`, `src/middlewares/error.middleware.ts:14-65`, `src/shared/logger/index.ts:4-32`, `src/shared/errors/app-error.ts:3-16`, `src/shared/errors/http-errors.ts:33-63`, `prisma/schema.prisma:25-134`, `package.json:7-53`.
+- **Arquivos gerados/alterados:** `docs/RFC.md`, `_work/LOG.md`.
+- **Pendências ou dúvidas:** Mantidas explicitamente abertas sem inventar contratos: (1) bloqueadores de aprovação arquitetural da RFC (comportamento transacional quando payload > 64 KB, ordenação por `order_id` durante retentativas, emissão de evento em `OrderService.create` e efeito de alterações no ciclo de vida da assinatura sobre eventos já enfileirados); (2) requisitos obrigatórios antes da implementação (isolamento multi-tenant, controles anti-SSRF além de HTTPS/Zod e contratos de HMAC/rotação de secret e proteção em repouso); e (3) detalhamentos técnicos encaminhados ao FDD (máquina de estados da outbox, agendamento de retries, recuperação de `processando`, ordenação determinística da consulta, códigos HTTP de sucesso/falha, ambiguidades `[T-12.1]`, `[T-63]`, `[T-64]`, relação `event_id`/PK, retenção de `deliveries`/DLQ e ajustes em `env.ts` e Pino).
+- **Correção do usuário:**
+
+
+### [2026-10-24 18:10] RFC — Alinhamento Fino com `ADR-002`, `ADR-004` e `ADR-005` (`docs/RFC.md`)
+- **Prompt (resumo):** Alinhar `docs/RFC.md` às ADRs aprovadas em três pontos: (1) preservar a garantia aprovada de ordenação por `order_id` em *single-worker* (`ADR-002` e `ADR-005`) e encaminhar ao FDD o mecanismo para cumpri-la sob retries; (2) distinguir o contrato aprovado de assinatura HMAC sobre o corpo HTTP (`ADR-004`) da possibilidade em aberto de ampliá-lo para vincular criptograficamente `X-Timestamp` contra *replay attacks*; e (3) preservar na descrição do modelo *at-least-once* (`ADR-005`) a limitação de que eventos enviados à DLQ dependem de recuperação ou replay manual administrativo.
+- **Fontes usadas:** `docs/RFC.md`, `docs/adrs/ADR-002-worker-separado-com-polling.md`, `docs/adrs/ADR-004-autenticacao-hmac-sha256-com-secret-por-endpoint.md`, `docs/adrs/ADR-005-entrega-at-least-once-com-event-id.md`, `_work/CATALOGO.md` (`[T-07]`, `[T-08]`, `[T-10]`, `[T-11]`, `[T-12]`, `[T-12.1]`, `[T-13]`, `[T-14]`, `[T-15]`, `[T-16]`, `[T-17]`, `[T-20]`, `[T-30]`, `[T-36]`, `[T-37]`, `[T-40]`, `[T-49]`, `[T-54]`, `[T-61]`, `[T-63]`, `[T-64]`).
+- **Arquivos gerados/alterados:** `docs/RFC.md`, `_work/LOG.md`.
+- **Pendências ou dúvidas:** Na revisão anterior da RFC: (1) o contrato de ordenação por `order_id` durante retentativas havia sido mantido como decisão arquitetural bloqueadora ("se a entrega fora de ordem é aceitável"), divergindo das `ADR-002` e `ADR-005`, que já aprovam a garantia de ordenação por `order_id` com um único worker (`[T-11]`); foi corrigido preservando a garantia aprovada e encaminhando ao FDD a especificação do mecanismo de sequenciamento/bloqueio por `order_id` durante retries; (2) a redação do HMAC tratava a participação de `X-Timestamp` sem separar suficientemente o que já foi aprovado na `ADR-004` (assinatura do corpo HTTP em `X-Signature` `[T-16]` e envio de `X-Timestamp` `[T-37]`) da questão em aberto sobre ampliar a entrada assinada para vincular criptograficamente `X-Timestamp` contra *replay attacks*; foi corrigido distinguindo explicitamente o contrato base aprovado da avaliação/especificação de ampliação no FDD; (3) na descrição do modelo *at-least-once*, faltava explicitar de forma uniforme no `TL;DR`, no `Escopo` e na `Proposta técnica` a ressalva da `ADR-005` de que eventos que esgotam os retries e vão para `webhook_dead_letter` deixam de ter envio automático e dependem de recuperação ou replay manual (`[T-14]`, `[T-15]`, `[T-30]`), o que foi incorporado em todas as seções correspondentes.
+- **Correção do usuário:**
+
+### [2026-10-24 18:27] RFC — Revisão Final para Aprovação, Recomendações dos 3 Bloqueadores e Gate Pré-Implementação
+- **Prompt (resumo):** Realizar revisão final para aprovação de `docs/RFC.md` utilizando as 7 ADRs locais, `TRANSCRICAO.md`, código existente e `_work/`; estruturar opções, recomendações técnicas, impactos/riscos e responsáveis para os 3 bloqueadores de aprovação (payload > 64 KB, emissão em `OrderService.create` e alterações no ciclo de vida das assinaturas) e explicitar os 5 requisitos obrigatórios antes da implementação.
+- **Fontes usadas:** `docs/adrs/ADR-001-outbox-transacional-no-mysql.md` a `ADR-007-payload-snapshot-e-limite-de-64kb.md`, `mba-ia-desafio-design-docs-com-ia/TRANSCRICAO.md`, `mba-ia-desafio-design-docs-com-ia/src/modules/orders/order.service.ts`, `mba-ia-desafio-design-docs-com-ia/src/modules/orders/order.status.ts`, `mba-ia-desafio-design-docs-com-ia/prisma/schema.prisma`, `mba-ia-desafio-design-docs-com-ia/src/middlewares/auth.middleware.ts`, `mba-ia-desafio-design-docs-com-ia/src/shared/logger/index.ts`, `mba-ia-desafio-design-docs-com-ia/src/config/env.ts`, `docs/RFC.md`, `_work/CATALOGO.md`, `_work/MAPA-CODIGO.md`, `_work/PLANO-ADRS.md`, `_work/INDICE.md`.
+- **Arquivos gerados/alterados:** `docs/RFC.md`, `_work/LOG.md`.
+- **Pendências ou dúvidas:** Como os 3 bloqueadores arquiteturais (A: efeito transacional de payload > 64 KB em `OrderService.changeStatus`; B: emissão ou não de evento em `OrderService.create`; C: efeito de desativação/exclusão/edição de assinatura e rotação de secret sobre eventos já enfileirados em `pendente`, retry e DLQ) não foram decididos em `TRANSCRICAO.md`, foram incorporadas à `docs/RFC.md` as opções viáveis, a recomendação arquitetural justificada (Opções A1, B1 e C2), os impactos/riscos de cada opção e os responsáveis pela decisão final, mantendo-se o status da RFC como `Em revisão` até a aprovação formal pelos decisores. Foram também consolidados os 5 requisitos obrigatórios antes da implementação e pré-deploy.
+- **Correção do usuário:**
+
+
+### [2026-10-24 18:45] RFC — Aprovação das Deliberações A1, B1 e C2 e Atualização de Status para Aprovado (`docs/RFC.md`)
+- **Prompt (resumo):** Ajustar `docs/RFC.md` adotando as opções A1 (rollback transacional se payload > 64 KB), B1 (emissão de eventos somente nas mudanças de status, sem notificação na criação inicial) e C2 (preservar snapshot do evento, verificar se a assinatura continua ativa e usar URL e credencial vigentes no envio), e marcar a RFC como aprovada.
+- **Fontes usadas:** `docs/RFC.md`, `_work/templates/rfc_template.md`, `docs/adrs/ADR-001-outbox-transacional-no-mysql.md` a `ADR-007-payload-snapshot-e-limite-de-64kb.md`, `_work/CATALOGO.md` (`[T-01]`, `[T-05]`, `[T-14]`, `[T-15]`, `[T-16]`, `[T-17]`, `[T-18]`, `[T-19]`, `[T-23]`, `[T-28]`, `[T-34]`, `[T-36]`, `[T-40]`, `[T-45]`, `[T-49]`, `[T-51]`, `[T-54]`, `[T-56]`, `[T-61]`), `src/modules/orders/order.service.ts:50-179`, `src/modules/orders/order.status.ts:3-10`, `prisma/schema.prisma:74-97`.
+- **Arquivos gerados/alterados:** `docs/RFC.md`, `_work/LOG.md`.
+- **Pendências ou dúvidas:** Os três bloqueadores arquiteturais da RFC foram deliberados e aprovados pelo usuário (**A1**, **B1** e **C2**), sendo o status do documento atualizado para `Aprovado` (`Resultado da revisão: Aprovada`) com os 6 critérios de aprovação assinalados (`[x]`). Os cinco requisitos obrigatórios antes da implementação e os detalhamentos técnicos correspondentes permanecem encaminhados para especificação no FDD.
+- **Correção do usuário:**
+
+
+### [2026-10-24 19:19] Auditoria Cruzada entre as 7 ADRs (`docs/adrs/ADR-001` a `ADR-007`) e a RFC (`docs/RFC.md`)
+- **Prompt (resumo):** Revisar as 7 ADRs e bater contra a RFC para verificar se há alguma divergência, avaliando os 7 apontamentos trazidos por outro agente sobre `ADR-001` a `ADR-007`.
+- **Fontes usadas:** `docs/RFC.md`, `docs/adrs/ADR-001-outbox-transacional-no-mysql.md` a `docs/adrs/ADR-007-payload-snapshot-e-limite-de-64kb.md`, `_work/PLANO-ADRS.md`, `_work/CATALOGO.md` (`[T-01]` a `[T-65]`), `_work/MAPA-CODIGO.md`, `_work/ADRS.sha256`, `.agents/skills/adr-generator/scripts/verificar_adr.py`.
+- **Arquivos gerados/alterados:** `_work/LOG.md`.
+- **Pendências ou dúvidas:** Nenhuma alteração nas ADRs congeladas (`0 erros` no validador e `100% OK` nos checksums SHA-256). Constatado que não há contradição de decisões fechadas entre as 7 ADRs e a RFC: as 3 deliberações posteriores aprovadas na revisão da RFC (`A1`: rollback transacional se payload > 64 KB; `B1`: emissão somente em `OrderService.changeStatus`, sem notificação em `OrderService.create`; `C2`: preservar snapshot, verificar assinatura ativa e usar URL/credencial vigentes) resolvem questões que as `ADR-001` e `ADR-007` deixaram abertas na reunião, mas pelas regras de `_work/PLANO-ADRS.md` e pelo congelamento em `_work/ADRS.sha256` não devem ser retroagidas para a seção `Decisão` das ADRs sem autorização explícita de descongelamento e novo checksum. Os apontamentos sobre `ADR-002` (mecanismo de ordenação por pedido), `ADR-003` (ressalva matemática do backoff exponencial e pendência `T-12.1`), `ADR-004` (lacunas de segurança como gate pré-implementação na RFC), `ADR-005` (ressalva de tentativas finitas e DLQ no corpo da decisão) e `ADR-006` (distinção entre autorização por papel via `requireRole` e isolamento multi-tenant por `customer_id`) já estão contemplados no texto atual das ADRs e da RFC.
+- **Correção do usuário:**
+
+
+### [2026-10-24 19:26] FDD — Elaboração e Auditoria do Feature Design Document (`docs/FDD.md`)
+- **Prompt (resumo):** Gerar o Feature Design Document (`docs/FDD.md`) utilizando a skill `/fdd-generator`.
+- **Fontes usadas:** `.agents/skills/fdd-generator/SKILL.md`, `_work/templates/fdd_template.md`, `docs/RFC.md`, `docs/adrs/ADR-001-outbox-transacional-no-mysql.md` a `ADR-007-payload-snapshot-e-limite-de-64kb.md`, `_work/CATALOGO.md` (`[T-01]` a `[T-65]` e Lacunas 1 a 11), `_work/INDICE.md`, `prisma/schema.prisma:1-138`, `package.json:1-54`, `.env.example:1-10`, `src/app.ts:1-76`, `src/server.ts:1-27`, `src/routes/index.ts:1-31`, `src/config/env.ts:1-27`, `src/config/database.ts:1-10`, `src/middlewares/auth.middleware.ts:1-61`, `src/middlewares/error.middleware.ts:1-65`, `src/middlewares/request-logger.middleware.ts:1-28`, `src/middlewares/validate.middleware.ts:1-37`, `src/shared/errors/app-error.ts:1-16`, `src/shared/errors/http-errors.ts:1-63`, `src/shared/errors/index.ts:1-10`, `src/shared/http/response.ts:1-24`, `src/shared/logger/index.ts:1-32`, `src/modules/orders/order.service.ts:1-255`, `src/modules/orders/order.status.ts:1-37`, `src/modules/orders/order.controller.ts:1-56`, `src/modules/orders/order.routes.ts:1-27`, `src/modules/orders/order.schemas.ts:1-34`, `src/modules/users/user.routes.ts:12-18`, `tests/setup.ts:1-20`, `tests/orders.test.ts:1-219`, `tests/auth.test.ts:1-84`.
+- **Arquivos gerados/alterados:** `docs/FDD.md`, `_work/LOG.md`.
+- **Pendências ou dúvidas:** As lacunas técnicas delegadas ao FDD pela RFC (modelos de dados, índices, máquina de estados da outbox, agendamento de retries com `attempts`/`nextAttemptAt`, recuperação de `PROCESSING` com lease de 60s em `lockedAt`, ordenação determinística `(created_at ASC, sequence ASC)` e retenção por `(webhookId, orderId)` sob retry, classificação HTTP `2xx` vs falhas, unidade de 64 KB = `65.536` bytes com `WEBHOOK_PAYLOAD_TOO_LARGE`, rotas REST sob `/api/v1`, `webhook.processor.ts`, campos básicos em `snake_case` e ajustes no logger Pino e `env.ts`) foram especificadas como `(proposta de design, sem origem na reunião)`. Mantidos na Seção 16 do FDD os 6 bloqueadores pré-implementação/pré-deploy que dependem de aprovação externa de negócio/segurança (modelo de vínculo multi-tenant `User`–`Customer`, aprovação anti-SSRF, fechamento criptográfico de `X-Timestamp`/`X-Signature` e rotação 24h, aprovação de `AES-256-GCM` em repouso e `redactPaths`, ratificação das propostas para as ambiguidades `[T-12.1]`, `[T-36]`, `[T-63]` e `[T-64]`, e revisão pré-deploy de 2 dias úteis por Sofia `[T-38.1]`).
+- **Correção do usuário:**
+
+
+### [2026-10-24 22:00] Commit exclusivo das ADRs (`docs/adrs/`)
+- **Prompt (resumo):** Commitar apenas as ADRs (`docs/adrs/`).
+- **Fontes usadas:** `docs/adrs/ADR-001-outbox-transacional-no-mysql.md` a `docs/adrs/ADR-007-payload-snapshot-e-limite-de-64kb.md`, `docs/adrs/README.md`.
+- **Arquivos gerados/alterados:** Commit `81fae7b` contendo exclusivamente `docs/adrs/ADR-001-outbox-transacional-no-mysql.md` a `docs/adrs/ADR-007-payload-snapshot-e-limite-de-64kb.md` e `docs/adrs/README.md`; atualizado `_work/LOG.md`.
+- **Pendências ou dúvidas:** Nenhuma. Os demais arquivos modificados (`docs/RFC.md`, `docs/FDD.md`, `docs/TRACKER.md`, `_work/*`) foram mantidos fora do commit conforme solicitado.
+- **Correção do usuário:**
+
+
+### [2026-10-24 22:09] Fechamento e aprovação do FDD (`docs/FDD.md`)
+- **Prompt (resumo):** Fechar o FDD e acusá-lo como aprovado (`Status: Aprovado`).
+- **Fontes usadas:** `docs/FDD.md`, `docs/RFC.md`, `docs/adrs/ADR-001-outbox-transacional-no-mysql.md` a `docs/adrs/ADR-007-payload-snapshot-e-limite-de-64kb.md`, `_work/CATALOGO.md`, `_work/MAPA-CODIGO.md`, `_work/templates/fdd_template.md`, `.agents/skills/fdd-generator/SKILL.md`.
+- **Arquivos gerados/alterados:** `docs/FDD.md`, `_work/LOG.md`.
+- **Pendências ou dúvidas:** Nenhuma pendência de especificação documental. O status do `docs/FDD.md` foi atualizado para `Aprovado` e as especificações das ambiguidades técnicas encaminhadas ao FDD (`[T-12.1]`, `[T-36]`, `[T-63]`, `[T-64]`) foram consolidadas como ratificadas no fechamento do documento, mantendo explicitados na Seção 16 os pré-requisitos obrigatórios de segurança e pré-deploy definidos na RFC (isolamento multi-tenant, controles anti-SSRF, contrato criptográfico do HMAC/`X-Timestamp`, proteção de secrets em repouso/redaction em logs e revisão de 2 dias úteis antes do deploy `[T-38.1]`).
+- **Correção do usuário:**
+
+
+### [2026-10-24 22:34] Commits individuais das 7 ADRs (`ADR-001` a `ADR-007`)
+- **Prompt (resumo):** Commitar as 7 ADRs em separado.
+- **Fontes usadas:** `docs/adrs/ADR-001-outbox-transacional-no-mysql.md` a `docs/adrs/ADR-007-payload-snapshot-e-limite-de-64kb.md`.
+- **Arquivos gerados/alterados:** Desfeito o commit agrupado anterior (`git reset --soft HEAD~1`) e gerados 7 commits individuais: `8250d44` (`ADR-001`), `21b4a60` (`ADR-002`), `e6b0393` (`ADR-003`), `04006aa` (`ADR-004`), `5bac24e` (`ADR-005`), `1e84c60` (`ADR-006`) e `b99ba4f` (`ADR-007`); atualizado `_work/LOG.md`.
+- **Pendências ou dúvidas:** Nenhuma. Os demais arquivos modificados (incluindo `docs/adrs/README.md`, `docs/RFC.md`, `docs/FDD.md`, `docs/TRACKER.md` e `_work/*`) permaneceram fora do stage.
+- **Correção do usuário:**
+
+
+### [2026-10-24 22:40] Commit dos demais artefatos da entrega (`docs/RFC.md`, `docs/FDD.md`, `docs/TRACKER.md`, `docs/adrs/README.md`, `_work/*` e skills)
+- **Prompt (resumo):** Commitar o restante dos arquivos modificados e novos do repositório.
+- **Fontes usadas:** `docs/RFC.md`, `docs/FDD.md`, `docs/TRACKER.md`, `docs/adrs/README.md`, `_work/LOG.md`, `_work/PLANO-ADRS.md`, `_work/RESUMO-ADRS.md`, `_work/templates/rfc_template.md`, `_work/templates/fdd_template.md`, `.agents/skills/rfc-generator/SKILL.md`, `.agents/skills/fdd-generator/SKILL.md`, `.gitignore`.
+- **Arquivos gerados/alterados:** Commit contendo `docs/RFC.md`, `docs/FDD.md`, `docs/TRACKER.md`, `docs/adrs/README.md`, `_work/LOG.md`, `_work/PLANO-ADRS.md`, `_work/RESUMO-ADRS.md`, `_work/templates/rfc_template.md`, `_work/templates/fdd_template.md`, `.agents/skills/rfc-generator/SKILL.md`, `.agents/skills/fdd-generator/SKILL.md` e `.gitignore`.
+- **Pendências ou dúvidas:** Nenhuma. Working tree limpa (`git status` sem pendências).
+- **Correção do usuário:**

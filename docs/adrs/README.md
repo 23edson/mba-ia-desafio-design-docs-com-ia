@@ -4,7 +4,7 @@ Este diretório armazena os ADRs (Architectural Decision Records) e o plano de d
 
 ## Planejamento e Escopo
 
-- [**Plano dos ADRs (`PLANO-ADRS.md`)**](./PLANO-ADRS.md): matriz de rastreabilidade ligando todas as decisões fechadas da reunião (`_work/CATALOGO.md`), alternativas descartadas (`_work/INDICE.md`) e âncoras de código (`_work/MAPA-CODIGO.md`) a cada ADR `[T-55]`.
+- [**Plano dos ADRs (`PLANO-ADRS.md`)**](../../_work/PLANO-ADRS.md): matriz de rastreabilidade ligando todas as decisões fechadas da reunião (`_work/CATALOGO.md`), alternativas descartadas (`_work/INDICE.md`) e âncoras de código (`_work/MAPA-CODIGO.md`) a cada ADR `[T-55]`.
 
 ## Índice de ADRs Previstos
 
